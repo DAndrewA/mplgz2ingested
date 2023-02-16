@@ -69,8 +69,8 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         af2 = xr.ones_like(ds.height) * np.interp(ds.height.values, afterpulse.height.values, afterpulse.channel_2.values)
         E0 = afterpulse.E0
         afterpulse = xr.Dataset()
-        afterpulse['channel_1'] = af1 * 2 / c * micro_conv
-        afterpulse['channel_2'] = af2 * 2 / c * micro_conv
+        afterpulse['channel_1'] = af1 #* 2 / c * micro_conv
+        afterpulse['channel_2'] = af2 #* 2 / c * micro_conv
         afterpulse['E0'] = E0
     else:
         afterpulse = xr.Dataset()
@@ -93,6 +93,7 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         background_h = ds[f'mn_background_{channel}'] * 2 / c * micro_conv # background
         background_sd_h = ds[f'sd_background_{channel}'] * 2 / c * micro_conv # sd of background
 
+        '''# INITIAL form of NRB calculation
         ##### NRB CALCULATION #####
         NRB = backscatter_h
         if used_d: NRB = NRB * deadtime # apply deadtime correction
@@ -105,6 +106,18 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
 
         # only interested in NRB above ground [201:] height bin
         NRB = NRB.where(NRB.height > 0)
+        '''
+
+        ##### NRB CALCULATION #####
+        # https://journals.ametsoc.org/view/journals/atot/19/4/1520-0426_2002_019_0431_ftesca_2_0_co_2.xml Campbell 2002
+
+        NRB = ds[f'backscatter_{channel}']
+        if used_d: NRB = NRB * deadtime # deadtime correction
+        NRB = NRB - ds[f'mn_background_{channel}'] # subtract background
+        if used_a: NRB = NRB - (afterpulse[f'channel_{channel}'] * ds['energy'] / afterpulse['E0']) # afterpulse correction
+        NRB = NRB * np.power(ds.height,2) # range^2 correction
+        if used_o: NRB = NRB / overlap # overlap correction
+        NRB = NRB / ds['energy'] * micro_conv # pulse energy correction
 
 
         # generate attributes for the new variables
