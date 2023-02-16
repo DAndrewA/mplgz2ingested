@@ -13,9 +13,6 @@ import glob
 
 # import local packages
 
-
-
-
 def raw_to_ingested(dir_target,date,limit_height=True, c=299792458, data_loaded=None):
     '''Convert hourly mpl files to the Summit ingested format.
 
