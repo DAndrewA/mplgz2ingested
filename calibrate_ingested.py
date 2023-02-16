@@ -6,6 +6,7 @@ Script to calibrate the ingested data format.
 
 import xarray as xr
 import numpy as np
+import copy
 
 def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=299792458, sources=None):
     '''Function to produce calibrated variables for the ingested MPL data format.
@@ -112,17 +113,18 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         
         if used_a: # if an afterpulse was given, store it in the dataset
             attrs_NRB_fmt[0] = ''
-            attrs_aft = ATTRIBUTES_CALIBRATION['afterpulse']
+            attrs_aft = copy.copy(ATTRIBUTES_CALIBRATION['afterpulse'])
             attrs_aft['comment'] = attrs_aft['comment'].format(channel)
             if 'afterpulse' in sources:
                 attrs_aft['source'] = sources['afterpulse']
 
             afterpulse[f'channel_{channel}'] = afterpulse[f'channel_{channel}'].assign_attrs(attrs_aft)
             ds[f'afterpulse_{channel}'] = afterpulse[f'channel_{channel}']
+            ds['afterpulse_E0'] = afterpulse['E0']
 
         if used_o: # if an overlap function was given, store it in the dataset
             attrs_NRB_fmt[1] = ''
-            attrs_overlap = ATTRIBUTES_CALIBRATION['overlap']
+            attrs_overlap = copy.copy(ATTRIBUTES_CALIBRATION['overlap'])
             if 'overlap' in sources:
                 attrs_overlap['source'] = sources['overlap']
             
@@ -131,7 +133,7 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
 
         if used_d: # if the deadtime correction was used, store it in the dataset
             attrs_NRB_fmt[2] = ''
-            attrs_deadtime = ATTRIBUTES_CALIBRATION['deadtime']
+            attrs_deadtime = copy.copy(ATTRIBUTES_CALIBRATION['deadtime'])
             if 'deadtime' in sources:
                 attrs_deadtime['source'] = sources['deadtime']
             
@@ -144,12 +146,12 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         ds[f'NRB_{channel}'] = NRB
 
         # also add background and sd to dataset
-        attrs_background = ATTRIBUTES_CALIBRATION['NRB_background']
+        attrs_background = copy.copy(ATTRIBUTES_CALIBRATION['NRB_background'])
         attrs_background['comment'] = attrs_background['comment'].format(channel,channel)
         background_h = background_h.assign_attrs(attrs_background)
         ds[f'NRB_{channel}_background'] = background_h
 
-        attrs_background_sd = ATTRIBUTES_CALIBRATION['NRB_background_sd']
+        attrs_background_sd = copy.copy(ATTRIBUTES_CALIBRATION['NRB_background_sd'])
         attrs_background_sd['comment'] = attrs_background_sd['comment'].format(channel, channel)
         background_sd_h = background_sd_h.assign_attrs(attrs_background_sd)
         ds[f'NRB_{channel}_background_sd'] = background_sd_h
@@ -161,7 +163,7 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
 ATTRIBUTES_CALIBRATION = {
     'NRB': {'long_name': 'Normalised Relative Backscatter', 'units': 'sr^-1 m^-1', 'comment': 'The backscatter signal for channel {} that has been range-corrected, background corrected, {}corrected for afterpulse, {}corrected for overlap and {}corrected for deadtime effects.'},
 
-    'afterpulse': {'long_name': 'Afterpulse signal', 'units': 'counts m^-1', 'comment': 'The afterpulse signal for channel {channel}.'},
+    'afterpulse': {'long_name': 'Afterpulse signal', 'units': 'counts m^-1', 'comment': 'The afterpulse signal for channel {}.'},
 
     'overlap': {'long_name': 'overlap correction factor', 'units': 'unitless', 'comment': 'The overlap correction as a function of height.'},
 
