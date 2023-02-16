@@ -12,6 +12,8 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
     
     The base function used can be found at https://www.orau.gov/support_files/2021ARMASR/posters/P002714.pdf although it should be noted that it uses inconsistent units and doesn't use the available variables derived from the data.
 
+    https://www.arm.gov/publications/tech_reports/doe-sc-arm-tr-098.pdf
+
     We need to consider the conversion of our data from counts/s to counts/m, and can then apply the afterpulse, overlap and range^2 corrections.
 
     INPUTS:
@@ -64,13 +66,16 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         used_a = True
         af1 = xr.ones_like(ds.height) * np.interp(ds.height.values, afterpulse.height.values, afterpulse.channel_1.values)
         af2 = xr.ones_like(ds.height) * np.interp(ds.height.values, afterpulse.height.values, afterpulse.channel_2.values)
+        E0 = afterpulse.E0
         afterpulse = xr.Dataset()
         afterpulse['channel_1'] = af1 * 2 / c * micro_conv
         afterpulse['channel_2'] = af2 * 2 / c * micro_conv
+        afterpulse['E0'] = E0
     else:
         afterpulse = xr.Dataset()
         afterpulse['channel_1'] = xr.zeros_like(ds.height)
         afterpulse['channel_2'] = xr.zeros_like(ds.height)
+        afterpulse['E0'] = 1
 
     # TODO: implement deadtime
     if deadtime is not None:
@@ -91,7 +96,7 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         NRB = backscatter_h
         if used_d: NRB = NRB * deadtime # apply deadtime correction
         NRB = NRB - background_h # subtract background
-        if used_a: NRB = NRB - afterpulse[f'channel_{channel}'] # subtract afterpulse
+        if used_a: NRB = NRB - afterpulse[f'channel_{channel}'] * ds['energy'] / afterpulse['E0'] # subtract afterpulse
         NRB = NRB * np.power(ds.height,2) # range^2 correction
         if used_o: NRB = NRB / overlap # apply overlap correction
         # not applying energy correction as I believe we don't have power as our stored variable...
