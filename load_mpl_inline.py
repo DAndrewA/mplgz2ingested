@@ -108,10 +108,17 @@ def mf_load_mpl_inline(fname_fmt, dir_root):
     fnames = [n for n in fnames if '.mpl.gz' in n[-7:]] # ensure all files are .mpl.gz
 
     ds = []
+    if fnames == []:
+        print(f'fnames is empty, no matches for glob string {os.path.join(dir_root,fname_fmt)}' )
+        return None
+
+    print('Loading: |',end='')
     for fname in fnames:
         n = os.path.join(dir_root,fname)
-        print(f'loading {fname}')
+        print(f'{fname[8:12]}',end='')
+        #print(f'loading {fname}')
         ds.append(load_mpl_inline(n))
+    print('')
     ds = xr.combine_nested(datasets=ds, concat_dim='profile', combine_attrs='override')
     return ds
 
