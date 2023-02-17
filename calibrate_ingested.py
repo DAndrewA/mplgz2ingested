@@ -125,17 +125,18 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         
         # new way of calulcating background:
         # background = ds[f'mn_background_{channel}']
-        background = ds[f'backscatter_{channel}'].where(ds.height > 7000,drop=True)
-        background = background.max(dim='height')
+        bkg_height = 10000 # background height [m]
+        background = ds[f'backscatter_{channel}'].where(ds.height > bkg_height,drop=True)
+        background = background.max(dim='height') * 1e6 # counts per second (from per microsecond)
 
         # start with the initial backscatter, in counts/s
-        NRB = ds[f'backscatter_{channel}']
+        NRB = ds[f'backscatter_{channel}'] * 1e6 # counts per second (from per microsecond)
         if used_d: NRB = NRB * deadtime # deadtime correction
-        if used_a: NRB = NRB - (afterpulse[f'channel_{channel}'] * ds['energy'] / afterpulse['E0']) # afterpulse correction
+        if used_a: NRB = NRB - (afterpulse[f'channel_{channel}'] * ds['energy'] / afterpulse['E0'])*1e6 # afterpulse correction, conversion of per microsecond to per second.
         NRB = NRB - background # background subtraction
-        NRB = NRB.where(NRB>0) # remove negative NRB values...
+        NRB = NRB.where(NRB>0 ) # remove negative NRB values...
 
-        NRB = NRB * np.power(ds['height'],2) # range2 correction
+        NRB = NRB * np.power(ds['height'],2) # range back in km # range2 correction
         if used_o: NRB = NRB / overlap # overlap correction
         NRB = NRB / (ds['energy'] / 1e6) # this gets us to the formula in Campbell 2002
 
