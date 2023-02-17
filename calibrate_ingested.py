@@ -128,13 +128,15 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         if used_d: NRB = NRB * deadtime # deadtime correction
         if used_a: NRB = NRB - (afterpulse[f'channel_{channel}'] * ds['energy'] / afterpulse['E0']) # afterpulse correction
         NRB = NRB - ds[f'mn_background_{channel}'] # background subtraction
+        NRB = NRB.where(NRB>0,0) # remove negative NRB values...
+
         NRB = NRB * np.power(ds['height'],2) # range2 correction
         if used_o: NRB = NRB / overlap # overlap correction
         NRB = NRB / (ds['energy'] / 1e6) # this gets us to the formula in Campbell 2002
 
         # the next few calculations concern getting the answer into the units sr^-1 m^-1:
         # The scaling factor is (E_photon) / (pulse frequency) / (detector area) / (dz for range bin)
-        A_det = np.pi/4 * (0.2032)^2 # 8-inch diameter aperture [m^2]
+        A_det = np.pi/4 * (0.2032)**2 # 8-inch diameter aperture [m^2]
         dz = np.ediff1d(ds['height']).mean() # difference between succdesive elements should be uniform, but mean taken just in case... [m]
         E_photon = (6.62607e-34)*c / (532e-9) # energy of the photon in [J]
         NRB = NRB * E_photon / dz / A_det
