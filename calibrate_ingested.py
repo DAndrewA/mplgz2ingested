@@ -203,6 +203,21 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         background_sd_h = background_sd_h.assign_attrs(attrs_background_sd)
         ds[f'NRB_{channel}_background_sd'] = background_sd_h
         '''
+
+    # calculate linear depolarisation ratio
+    dpol_mpl = ds['NRB_1'] / ds['NRB_2']
+    dpol_mpl = dpol_mpl.fillna(0)
+    dpol_linear = dpol_mpl / (1+ dpol_mpl)
+    
+    NRB_total = 2*ds['NRB_1'] + ds['NRB_2']
+
+    dpol_mpl = dpol_mpl.assign_attrs(ATTRIBUTES_CALIBRATION['depol_mpl'])
+    dpol_linear = dpol_linear.assign_attrs(ATTRIBUTES_CALIBRATION['depol_linear'])
+    NRB_total = NRB_total.assign_attrs(ATTRIBUTES_CALIBRATION['NRB_total'])
+    ds['depol_mpl'] = dpol_mpl
+    ds['depol_linear'] = dpol_linear
+    ds['NRB_total'] = NRB_total
+
     return ds
 
 
@@ -218,5 +233,11 @@ ATTRIBUTES_CALIBRATION = {
 
     'NRB_background': {'long_name': 'Normalised relative backscatter background count', 'units': 'counts m^-1', 'comment': 'The background for the NRB in channel {}. Calculated from the field mn_background_{} * 2 / c * 1e6.'},
 
-    'NRB_background_sd': {'long_name': 'normalised relative backscatter background standard deviation', 'units': 'counts m^-1', 'comment': 'Standard deviation on the NRB background count for channel {}. Calculated from the field sd_background_{} * 2 / c * 1e6.'}
+    'NRB_background_sd': {'long_name': 'normalised relative backscatter background standard deviation', 'units': 'counts m^-1', 'comment': 'Standard deviation on the NRB background count for channel {}. Calculated from the field sd_background_{} * 2 / c * 1e6.'},
+
+    'depol_mpl': {'long_name': 'MPL depolarisation ratio', 'units': 'unitless', 'comment': 'MPL depolarisation ratio, taken as NRB_1/NRB_2 as defined in Flynn et al. (2007) Novel polarization-sensitive micropulse lidar measurement technique, eq1.4.'},
+
+    'depol_linear' : {'long_name': 'linear depolarisation ratio', 'units': 'unitless', 'comment': 'Linear depolarisation ratio as seen in Flynn et al. (2007) Novel polarization-sensitive micropulse lidar measurement technique, eq1.6.'},
+
+    'NRB_total' : {'long_name': 'total attenuated backscatter', 'units': 'sr^-1 m^-1', 'comment': 'The total backscatter coefficient, that has been determined from NRB_1 and NRB_2 according to Flynn et al. (2007) Novel polarization-sensitive micropulse lidar measurement technique, eq1.8'}
 }  
