@@ -88,12 +88,12 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
     
     # for both channels
     for channel in [1,2]:
+        
+        '''# INITIAL form of NRB calculation
         # start with a conversion to counts per meter
         backscatter_h = ds[f'backscatter_{channel}'] * 2 / c * micro_conv # backscatter
         background_h = ds[f'mn_background_{channel}'] * 2 / c * micro_conv # background
         background_sd_h = ds[f'sd_background_{channel}'] * 2 / c * micro_conv # sd of background
-
-        '''# INITIAL form of NRB calculation
         ##### NRB CALCULATION #####
         NRB = backscatter_h
         if used_d: NRB = NRB * deadtime # apply deadtime correction
@@ -107,7 +107,7 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         # only interested in NRB above ground [201:] height bin
         NRB = NRB.where(NRB.height > 0)
         '''
-
+        '''
         ##### NRB CALCULATION #####
         # https://journals.ametsoc.org/view/journals/atot/19/4/1520-0426_2002_019_0431_ftesca_2_0_co_2.xml Campbell 2002
 
@@ -118,7 +118,27 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         NRB = NRB * np.power(ds.height,2) # range^2 correction
         if used_o: NRB = NRB / overlap # overlap correction
         NRB = NRB / ds['energy'] * micro_conv # pulse energy correction
+        '''
 
+        ##### NRB CALCULATION #####
+        # This will be according to the Chu Lidar textbook pg192, and my subsequent derivation considering the integration time of the instrument.
+        
+        # start with the initial backscatter, in counts/s
+        NRB = ds[f'backscatter_{channel}']
+        if used_d: NRB = NRB * deadtime # deadtime correction
+        if used_a: NRB = NRB - (afterpulse[f'channel_{channel}'] * ds['energy'] / afterpulse['E0']) # afterpulse correction
+        NRB = NRB - ds[f'mn_background_{channel}'] # background subtraction
+        NRB = NRB * np.power(ds['height'],2) # range2 correction
+        if used_o: NRB = NRB / overlap # overlap correction
+        NRB = NRB / (ds['energy'] / 1e6) # this gets us to the formula in Campbell 2002
+
+        # the next few calculations concern getting the answer into the units sr^-1 m^-1:
+        # The scaling factor is (E_photon) / (pulse frequency) / (detector area) / (dz for range bin)
+        A_det = np.pi/4 * (0.2032)^2 # 8-inch diameter aperture [m^2]
+        dz = np.ediff1d(ds['height']).mean() # difference between succdesive elements should be uniform, but mean taken just in case... [m]
+        E_photon = (6.62607e-34)*c / (532e-9) # energy of the photon in [J]
+        NRB = NRB * E_photon / dz / A_det
+        NRB = NRB / ds['rep_rate']
 
         # generate attributes for the new variables
         attrs_NRB = ATTRIBUTES_CALIBRATION['NRB']
@@ -158,6 +178,12 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         NRB = NRB.assign_attrs(attrs_NRB)
         ds[f'NRB_{channel}'] = NRB
 
+        # assign variables for the scaling constants
+        ds['A_det'] = xr.DataArray(A_det, attrs={'long_name': 'detector area', 'units': 'm^2', 'comment': 'The detector area for a circular 8" aperture, see https://www.arm.gov/publications/tech_reports/handbooks/mpl_handbook.pdf'})
+        ds['dz'] = xr.DataArray(dz, attrs={'long_name': 'range bin height', 'units': 'm', 'comment': 'The mean height of the range bins data is collected in, derived from the height variable.'})
+        ds['E_photon'] = xr.DataArray(E_photon, attrs={'long_name': 'photon energy', 'units': 'J', 'comment': 'The photon energy in Joules, assuming a monochromatic emission at 532nm.'})
+
+        '''
         # also add background and sd to dataset
         attrs_background = copy.copy(ATTRIBUTES_CALIBRATION['NRB_background'])
         attrs_background['comment'] = attrs_background['comment'].format(channel,channel)
@@ -168,13 +194,13 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         attrs_background_sd['comment'] = attrs_background_sd['comment'].format(channel, channel)
         background_sd_h = background_sd_h.assign_attrs(attrs_background_sd)
         ds[f'NRB_{channel}_background_sd'] = background_sd_h
-
+        '''
     return ds
 
 
 
 ATTRIBUTES_CALIBRATION = {
-    'NRB': {'long_name': 'Normalised Relative Backscatter', 'units': 'sr^-1 m^-1', 'comment': 'The backscatter signal for channel {} that has been range-corrected, background corrected, {}corrected for afterpulse, {}corrected for overlap and {}corrected for deadtime effects.'},
+    'NRB': {'long_name': 'attenuated backscatter', 'units': 'sr^-1 m^-1', 'comment': 'The backscatter signal for channel {} that has been range-corrected, background corrected, {}corrected for afterpulse, {}corrected for overlap and {}corrected for deadtime effects. Has also been corrected for the detector aperture, pulse energy, etc.'},
 
     'afterpulse': {'long_name': 'Afterpulse signal', 'units': 'counts m^-1', 'comment': 'The afterpulse signal for channel {}.'},
 
