@@ -123,12 +123,17 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         ##### NRB CALCULATION #####
         # This will be according to the Chu Lidar textbook pg192, and my subsequent derivation considering the integration time of the instrument.
         
+        # new way of calulcating background:
+        # background = ds[f'mn_background_{channel}']
+        background = ds[f'backscatter_{channel}'].where(ds.height > 7000,drop=True)
+        background = background.max(dim='height')
+
         # start with the initial backscatter, in counts/s
         NRB = ds[f'backscatter_{channel}']
         if used_d: NRB = NRB * deadtime # deadtime correction
         if used_a: NRB = NRB - (afterpulse[f'channel_{channel}'] * ds['energy'] / afterpulse['E0']) # afterpulse correction
-        NRB = NRB - ds[f'mn_background_{channel}'] # background subtraction
-        NRB = NRB.where(NRB>0,0) # remove negative NRB values...
+        NRB = NRB - background # background subtraction
+        NRB = NRB.where(NRB>0) # remove negative NRB values...
 
         NRB = NRB * np.power(ds['height'],2) # range2 correction
         if used_o: NRB = NRB / overlap # overlap correction
