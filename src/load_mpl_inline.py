@@ -115,7 +115,7 @@ def mf_load_mpl_inline(fname_fmt, dir_root):
     print('Loading: |',end='')
     for fname in fnames:
         n = os.path.join(dir_root,fname)
-        print(f'{fname[8:12]}',end='')
+        print(f'{fname[8:12]}|',end='')
         #print(f'loading {fname}')
         ds.append(load_mpl_inline(n))
     print('')

@@ -14,7 +14,7 @@ import raw_to_ingested
 import load_afterpulse
 import calibrate_ingested
 
-def create_ingested(date,dir_target,dir_mpl, overwrite, afterpulse=None, overlap=None, sources={}):
+def create_ingested(date,dir_target,dir_mpl, overwrite=False, afterpulse=None, overlap=None, sources={}):
     '''For a given date, create an ingested file and save it to the target directory.
     
     INPUTS:
@@ -56,10 +56,11 @@ def create_ingested(date,dir_target,dir_mpl, overwrite, afterpulse=None, overlap
 
     # now save the dataset as a netcdf file
     ds.to_netcdf(os.path.join(dir_target, save_fname))
+    return
 
 
 
-def create_ingested_month(year, month, dir_target, dir_mpl, overwrite, fname_afterpulse=None, fname_overlap=None):
+def create_ingested_month(year, month, dir_target, dir_mpl, overwrite=False, fname_afterpulse=None, fname_overlap=None):
     '''Function to call create_ingested() for every day in a month.
     
     INPUTS:
@@ -129,7 +130,7 @@ def load_o_a_s(fname_overlap,fname_afterpulse):
     afterpulse = None
     if fname_afterpulse is not None:
         sources['afterpulse'] = fname_afterpulse
-        afterpulse = load_afterpulse.load_afterpulse()
+        afterpulse = load_afterpulse.load_afterpulse(fname_afterpulse)
 
     return overlap, afterpulse, sources
 
@@ -141,12 +142,12 @@ if __name__=='__main__':
 
     parser.add_argument('-y', '--year', required=True, type=int, help='The year for the month being converted.')
     parser.add_argument('-m', '--month', required=True, type=int, help='Month for the data being converted, as an integer.')
-    parser.add_argument('-t', '--targetdir', default='/gws/nopw/j04/ncas_radar_vol2/data/ICECAPSarchive/mpl/ingested_leeds', help='The directory that the ingested files will be saved to.')
-    parser.add_argument('-d', '--datadir', default='/gws/nopw/j04/ncas_radar_vol2/data/ICECAPSarchive/mpl/raw', help='The directory from which the raw .mpl.gz data will be extracted.')
+    parser.add_argument('-t', '--targetdir', default='/gws/nopw/j04/ncas_radar_vol2/data/ICECAPSarchive/mpl/leeds_ingested', help='The directory that the ingested files will be saved to. Defaults to /gws/nopw/j04/ncas_radar_vol2/data/ICECAPSarchive/mpl/leeds_ingested')
+    parser.add_argument('-d', '--datadir', default='/gws/nopw/j04/ncas_radar_vol2/data/ICECAPSarchive/mpl/raw', help='The directory from which the raw .mpl.gz data will be extracted. Defaults to /gws/nopw/j04/ncas_radar_vol2/data/ICECAPSarchive/mpl/raw')
     parser.add_argument('-o', '--overwrite', action='store_true', help='Optional, Overwrite existing ingested files at targetdir.')
 
     parser.add_argument('-A', '--afterpulse', help='Optional, Full filename for the afterpulse file.')
-    parser.add_argument('-O', '--overlap', comment='Optional, Full filename for the overlap function file.')
+    parser.add_argument('-O', '--overlap', help='Optional, Full filename for the overlap function file.')
 
     # an optional argument, if day is passed in then we just do a single day
     parser.add_argument('--day', type=int, help='Optional, specifies a particular day for which the ingestion should be done.')
