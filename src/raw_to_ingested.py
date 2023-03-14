@@ -55,7 +55,7 @@ def raw_to_ingested(dir_target,date,limit_height=True, c=299792458, data_loaded=
         mpl_filenames = sorted(glob.glob(filename_fmt,root_dir=dir_target))
         # if not 24 files are found, then the function will break and return None
         if len(mpl_filenames) != 24:
-            print(f'raw_to_ingested: For full day, 24 files are expected. {len(mpl_filenames)} files matching date {date} in {dir_target=} found.')
+            print(f'raw_to_ingested: For full day, 24 files are expected. {len(mpl_filenames)} files matching date {date} in {dir_target} found.')
             return False
 
         # load in the data to an xarray dataset
@@ -64,13 +64,21 @@ def raw_to_ingested(dir_target,date,limit_height=True, c=299792458, data_loaded=
     # create ingested dataset, with appropriate dimensions and height coordinates
     ds = xr.Dataset()
     # set the dimensions for the dataset
-    dims = {'time':17280, 'height':1999}
+    timeLength = data_loaded.profile.size # in response to failing during calibration loading
+
+    dims = {'time':timeLength, 'height':1999}
     if limit_height: 
         dims['height'] = 1200
     
     args = {'num_bins': dims['height'], 'bin_time':data_loaded['bin_time'].values[0], 'c':c, 'v_offset':3000}
     heights = generate_heights(**args)
+    
+    # need to check that all time measurements are unique. Otherwise, will need to subset all subsequent data...
     times = data_loaded.time.values
+    uniq_times, uniq_ind = np.unique(times,return_index=True)
+    if uniq_times.size != times.size: # if there are duplicate times
+        data_loaded = data_loaded.isel(profile=uniq_ind)
+        times = data_loaded.time.values
 
     ds = ds.assign_coords({'time': times,'height':heights})
 
