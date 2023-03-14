@@ -44,7 +44,7 @@ def create_ingested(date,dir_target,dir_mpl, overwrite=False, afterpulse=None, o
             return
 
     # create the filename format from the date
-    fname_glob = f'{date.year:04}{date.month:02}{date.day:02}*.mpl.gz'
+    fname_glob = f'{date.year:04}{date.month:02}{date.day:02}*00.mpl.gz'
     print(fname_glob)
     ds = load_mpl_inline.mf_load_mpl_inline(fname_glob, dir_mpl)
 
