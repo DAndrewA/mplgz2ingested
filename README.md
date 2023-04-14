@@ -4,7 +4,10 @@ A package to allow for raw `.mpl` files to be loaded, ingested and calibrated, a
 
 ## Installation
 
-Currently, my method of installing is to navigate to the root directory of the repository. Within the desired python environment, then execute the console command ```pip install -e .```
+Currently, my method of installing is to navigate to the root directory of the repository. Within the desired python environment, then execute the console command 
+
+```pip install -e .```
+
 This will install `mplgz_to_ingested` as an editable package, allowing for further modification.
 
 ## Usage
@@ -19,9 +22,9 @@ This will install `mplgz_to_ingested` as an editable package, allowing for furth
 
 ## To Do
 
-- [] Check that `create_ingested` and `run_create_ingested` function correctly now that package structure has changed.
-- [] Create functionality for loading in data on days with afterpulse files present.
-- [] Create functionality for loading in data on days where timestamps may overlap.
-- [] Create quicklooks functionality for afterpulse days and afterpulse profiles.
-- [] Create list of afterpulse files that appear to occur on cloud-free days.
-- [] Introduce CF compliancy into the data.
+-  Check that `create_ingested` and `run_create_ingested` function correctly now that package structure has changed.
+-  Create functionality for loading in data on days with afterpulse files present.
+-  Create functionality for loading in data on days where timestamps may overlap.
+-  Create quicklooks functionality for afterpulse days and afterpulse profiles.
+-  Create list of afterpulse files that appear to occur on cloud-free days.
+-  Introduce CF compliancy into the data.
