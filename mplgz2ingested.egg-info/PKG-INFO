@@ -1,6 +1,0 @@
-Metadata-Version: 2.1
-Name: mplgz2ingested
-Version: 0.1
-Summary: Package to load raw .mpl.gz lidar data files and convert them to an ingested format.
-Author: Andrew Martin
-Author-email: eeasm@leeds.ac.uk

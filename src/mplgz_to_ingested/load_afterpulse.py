@@ -4,8 +4,8 @@ Date created: 16/2/23
 Script to load in an afterpulse file and format it ready for use in calibrate_ingested.py.
 '''
 
-import load_mpl_inline
-import raw_to_ingested
+from . import load_mpl_inline
+from . import raw_to_ingested
 import xarray as xr
 import numpy as np
 

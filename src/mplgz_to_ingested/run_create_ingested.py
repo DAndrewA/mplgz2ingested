@@ -25,18 +25,20 @@ overlap, afterpulse, sources = create_ingested.load_o_a_s(None, fname_afterpulse
 
 sources['afterpulse'] = '201907111242.mpl.gz  --- NOTE: singular file used for all days in this run (17/2/23)'
 
+overwrite = False
 
 numfail=0
 ntotal=0
 while date0 <= date_final:
     ntotal+=1
     try:
-        create_ingested.create_ingested(date=date0,dir_target=dir_target, dir_mpl=dir_mpl, afterpulse=afterpulse, overlap=overlap, sources=sources, overwrite=True)
-    except:
-        print(f'{date0=} failed: presumably no match on glob string')
+        create_ingested.create_ingested(date=date0,dir_target=dir_target, dir_mpl=dir_mpl, afterpulse=afterpulse, overlap=overlap, sources=sources, overwrite=overwrite)
+    except Exception as err:
+        print(f'{date0} failed: presumably no match on glob string')
+        print(err)
         numfail +=1
 
     date0 = date0 + datetime.timedelta(days=1)
 
 print('FINISHED!!!!!')
-print(f'{ntotal=}  |  {numfail=}')
+print(f'{ntotal}  |  {numfail}')

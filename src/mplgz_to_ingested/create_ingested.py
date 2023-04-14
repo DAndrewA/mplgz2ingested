@@ -9,10 +9,10 @@ import xarray as xr
 import numpy as np
 import os
 
-import load_mpl_inline
-import raw_to_ingested
-import load_afterpulse
-import calibrate_ingested
+from . import load_mpl_inline
+from . import raw_to_ingested
+from . import load_afterpulse
+from . import calibrate_ingested
 
 def create_ingested(date,dir_target,dir_mpl, overwrite=False, afterpulse=None, overlap=None, sources={}):
     '''For a given date, create an ingested file and save it to the target directory.
