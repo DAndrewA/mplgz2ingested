@@ -46,7 +46,7 @@ def create_ingested(date,dir_target,dir_mpl, overwrite=False, afterpulse=None, o
     # create the filename format from the date
     fname_glob = f'{date.year:04}{date.month:02}{date.day:02}*00.mpl.gz'
     print(fname_glob)
-    ds = load_mpl_inline.mf_load_mpl_inline(fname_glob, dir_mpl)
+    ds = load.load_fromglob(fname_glob, dir_mpl)
 
     # apply the raw_to_ingested algorithm on the already-loaded ds
     ds = raw_to_ingested.raw_to_ingested(None, None, data_loaded=ds)
@@ -130,7 +130,7 @@ def load_o_a_s(fname_overlap,fname_afterpulse):
     afterpulse = None
     if fname_afterpulse is not None:
         sources['afterpulse'] = fname_afterpulse
-        afterpulse = load_afterpulse.load_afterpulse(fname_afterpulse)
+        afterpulse = afterpulse.load_afterpulse(fname_afterpulse)
 
     return overlap, afterpulse, sources
 
