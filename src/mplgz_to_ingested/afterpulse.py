@@ -8,6 +8,7 @@ from . import load
 from . import raw_to_ingested
 import xarray as xr
 import numpy as np
+import os
 
 def load_afterpulse(fname, energy_weighted=True):
     '''Function to load an afterpulse file from .mpl.gz format.
@@ -46,3 +47,28 @@ def load_afterpulse(fname, energy_weighted=True):
     afterpulse.assign_attrs({'source_file': fname})
 
     return afterpulse
+
+
+def get_all_afterpulse(dir_root):
+    '''Function to get all of the candidate afterpulse files from a directory of .mpl.gz files
+    
+    INPUTS:
+        dir_root : string
+            Root directory containing all the .mpl.gz files.
+
+    OUTPUTS:
+        calibration_files : list [string]
+            List of strinbgs for valid filenames that are candidates for afterpulse files
+    '''
+    # faster to use os.listdir than os.walk
+    calibration_files = []
+
+    for fname in os.listdir(dir_root):
+        # this check assumes the end of the filename format end as (YYMMDDHH)mm.mpl.gz and that files generally start on the hour
+        if fname[-9:] != '00.mpl.gz':
+            if '.mpl.gz' in fname:
+                calibration_files.append(fname)
+
+    return calibration_files
+
+    
