@@ -4,7 +4,7 @@ Date created: 16/2/23
 Script to load in an afterpulse file and format it ready for use in calibrate_ingested.py.
 '''
 
-from . import load_mpl_inline
+from . import load
 from . import raw_to_ingested
 import xarray as xr
 import numpy as np
@@ -25,7 +25,7 @@ def load_afterpulse(fname, energy_weighted=True):
             Dataset containing the afterpulse profile in both channels at given height coordinates.    
     '''
 
-    ds = load_mpl_inline.load_mpl_inline(fname)
+    ds = load.load_mplgz(fname)
     ds = raw_to_ingested.raw_to_ingested(None, None, data_loaded=ds)
     
     E0 = ds.energy.mean(dim='time')
