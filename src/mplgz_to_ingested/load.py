@@ -123,6 +123,35 @@ def mf_load_mpl_inline(fname_fmt, dir_root):
     return ds
 
 
+def load_fromlist(fnames, dir_root):
+    '''Function to load multiple .mpl.gz files from a list of filenames.
+    
+    INPUTS:
+        fnames : list [string]
+            List of strings that are valid filenames to be loaded.
+
+        dir_root : string
+            path to the root directory containing the .mpl.gz files
+    
+    OUTPUTS:
+        ds : xr.Dataset
+            xarray dataset containing the data from the mpl files.
+    '''
+    ds = []
+    if fnames == []:
+        print(f'fnames is empty, returning None')
+        return None
+
+    print('Loading: |',end='')
+    for fname in fnames:
+        n = os.path.join(dir_root,fname)
+        print(f'{fname[8:12]}|',end='')
+        #print(f'loading {fname}')
+        ds.append(load_mplgz(n))
+    print('')
+    ds = xr.combine_nested(datasets=ds, concat_dim='profile', combine_attrs='override')
+    return ds
+
 
 #fname = '/home/users/eeasm/_scripts/ICESat2/data/cycle10/mpl/mplraw_zip/202102110000.mpl.gz'
 #load_mplgz(fname)
