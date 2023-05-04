@@ -42,6 +42,10 @@ def mpl2nc_read_mpl_gzip(fname):
     INPUTS:
         fname : string
             Full filename of the .mpl.gz file to be opened, including the file extension.
+
+    OUTPUTS:
+        mpl2nc.process_mpl(dd) : dictionary
+            Dictionary produced by mpl2nc.process_mpl, containing information of the laoded mpl data.
     '''
     dd = []
     with gzip.open(fname,'rb') as f:
@@ -148,4 +152,4 @@ def load_fromglob(globstr, dir_root):
 
 #dir_root = '/home/users/eeasm/_scripts/ICESat2/data/test_raw_to_ingested/mplraw_zip'
 #globstr = '20201127*.mpl.gz'
-#print(mf_load_mpl_inline(globstr,dir_root))
+#print(load_fromglob(globstr,dir_root))
