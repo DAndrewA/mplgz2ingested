@@ -88,44 +88,11 @@ def mpl_dict_to_xarray(d):
     return ds
 
 
-def mf_load_mpl_inline(fname_fmt, dir_root):
-    '''Function to load multiple .mpl.gz files inline.
-    
-    INPUTS:
-        fname_fmt : glob string
-            glob string for the format the filenames take for the files being loaded.
-
-        dir_root : string
-            path to the root directory containing the .mpl.gz files
-            
-    OUTPUTS:
-        ds : xr.Dataset
-            xarray dataset containing the data from the mpl files.
-    '''
-
-    fnames = glob.glob(fname_fmt, root_dir=dir_root)
-    fnames = sorted(fnames)
-    fnames = [n for n in fnames if '.mpl.gz' in n[-7:]] # ensure all files are .mpl.gz
-
-    ds = []
-    if fnames == []:
-        print(f'fnames is empty, no matches for glob string {os.path.join(dir_root,fname_fmt)}' )
-        return None
-
-    print('Loading: |',end='')
-    for fname in fnames:
-        n = os.path.join(dir_root,fname)
-        print(f'{fname[8:12]}|',end='')
-        #print(f'loading {fname}')
-        ds.append(load_mplgz(n))
-    print('')
-    ds = xr.combine_nested(datasets=ds, concat_dim='profile', combine_attrs='override')
-    return ds
-
-
 def load_fromlist(fnames, dir_root):
     '''Function to load multiple .mpl.gz files from a list of filenames.
     
+    This function assumes that all of the strings in fnames end in '.mpl.gz'
+
     INPUTS:
         fnames : list [string]
             List of strings that are valid filenames to be loaded.
@@ -150,6 +117,29 @@ def load_fromlist(fnames, dir_root):
         ds.append(load_mplgz(n))
     print('')
     ds = xr.combine_nested(datasets=ds, concat_dim='profile', combine_attrs='override')
+    return ds
+
+
+def load_fromglob(globstr, dir_root):
+    '''Function to load multiple .mpl.gz files from a glob string match
+    
+    The glob string doesn't need to end in '.mpl.gz', as this is checked for before passing the list to load_fomlist.
+
+    INPUTS:
+        globstr : string
+            The glob string for data files to be matched against
+
+        dir_root : string
+            The root directory containing the .mpl.gz files to be laoded
+
+    OUTPUTS:
+        ds : xr.Dataset
+            xarray Dataset containing the data from the mpl files
+    '''
+    fnames = glob.glob(globstr, root_dir=dir_root)
+    fnames = sorted(fnames)
+    fnames = [n for n in fnames if '.mpl.gz' in n[-7:]] # ensure all files are .mpl.gz
+    ds = load_fromlist(fnames, dir_root)
     return ds
 
 
