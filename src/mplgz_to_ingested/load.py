@@ -13,7 +13,7 @@ import numpy as np
 import netCDF4
 import glob
 
-def load_mpl_inline(fname):
+def load_mplgz(fname):
     '''Function to load .mpl.gz files from the archive without the need to create additional files.
     
     This will work by opening the .gz file in a binary read mode, and then using functions from mpl2nc to read the binary format.
@@ -117,7 +117,7 @@ def mf_load_mpl_inline(fname_fmt, dir_root):
         n = os.path.join(dir_root,fname)
         print(f'{fname[8:12]}|',end='')
         #print(f'loading {fname}')
-        ds.append(load_mpl_inline(n))
+        ds.append(load_mplgz(n))
     print('')
     ds = xr.combine_nested(datasets=ds, concat_dim='profile', combine_attrs='override')
     return ds
@@ -125,7 +125,7 @@ def mf_load_mpl_inline(fname_fmt, dir_root):
 
 
 #fname = '/home/users/eeasm/_scripts/ICESat2/data/cycle10/mpl/mplraw_zip/202102110000.mpl.gz'
-#load_mpl_inline(fname)
+#load_mplgz(fname)
 
 #dir_root = '/home/users/eeasm/_scripts/ICESat2/data/test_raw_to_ingested/mplraw_zip'
 #globstr = '20201127*.mpl.gz'
