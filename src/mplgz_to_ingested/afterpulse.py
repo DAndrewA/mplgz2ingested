@@ -69,6 +69,6 @@ def get_all_afterpulse(dir_root):
             if '.mpl.gz' in fname:
                 calibration_files.append(fname)
 
-    return calibration_files
+    return sorted(calibration_files)
 
     
