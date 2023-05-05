@@ -7,13 +7,9 @@ name = 'mplgz_to_ingested'
 version = '0.0.1'
 dependencies = [
     'mpl2nc',
-    'gzip',
-    'os',
-    'datetime',
     'xarray',
     'numpy',
-    'netCDF4',
-    'glob'
+    'netCDF4'
 ]
 
 [tool.setuptools.packages.find]
