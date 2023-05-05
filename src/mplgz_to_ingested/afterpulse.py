@@ -68,7 +68,7 @@ def get_all_from_catalogue(catalogue, fname_fmt='%Y%m%d%H%M.mpl.gz'):
             list of dt.datetime objects, corresponding to when the afterpulse files were recorded.
     '''
     f = open(catalogue, 'r')
-    fnames = f.read().split(',')
+    fnames = f.read().split(', ')
     f.close()
     datelist = [dt.datetime.strptime(fn,fname_fmt) for fn in fnames]
     return fnames, datelist
