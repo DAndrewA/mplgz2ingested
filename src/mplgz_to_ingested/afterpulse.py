@@ -9,6 +9,7 @@ from . import raw_to_ingested
 import xarray as xr
 import numpy as np
 import os
+import datetime as dt
 
 def load_afterpulse(fname, energy_weighted=True):
     '''Function to load an afterpulse file from .mpl.gz format.
@@ -49,7 +50,31 @@ def load_afterpulse(fname, energy_weighted=True):
     return afterpulse
 
 
-def get_all_afterpulse(dir_root):
+def get_all_from_catalogue(catalogue, fname_fmt='%Y%m%d%H%M.mpl.gz'):
+    '''Funciton to get all filenames and dates of valid afterpulse files from a catalogue.
+    
+    INPUTS:
+        catalogue : string
+            filename for the afterpulse catalogue to extract filenames from
+
+        fname_fmt : string
+            filename format for the afterpulse files, to allow for dt.datetime objects to be created.
+
+    OUPUTS:
+        fnames : list [strings]
+            list of filenames for the afterpulse files
+
+        datelist : list [dt.datetime]
+            list of dt.datetime objects, corresponding to when the afterpulse files were recorded.
+    '''
+    f = open(catalogue, 'r')
+    fnames = f.read().split(',')
+    f.close()
+    datelist = [dt.datetime.strptime(fn,fname_fmt) for fn in fnames]
+    return fnames, datelist
+
+
+def get_all_afterpulse_candidates(dir_root):
     '''Function to get all of the candidate afterpulse files from a directory of .mpl.gz files
     
     INPUTS:
