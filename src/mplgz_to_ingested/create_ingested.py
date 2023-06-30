@@ -37,7 +37,8 @@ def create_ingested(date,dir_target,dir_mpl, overwrite=False, afterpulse=None, o
             Data for the overlap function that can be utilised in calibrate_ingested.
     '''
     # check to see if the ingested file already exists, and if it can be overwritten.
-    save_fname = f'smtmplpolX1.a1.{date.year:04}{date.month:02}{date.day:02}.000000.cdf'
+    #save_fname = f'smtmplpolX1.a1.{date.year:04}{date.month:02}{date.day:02}.000000.cdf'
+    save_fname = f'mpl_ingested_{date.year:04}{date.month:02}{date.day:02}.nc'
     if not overwrite:
         if os.path.isfile(os.path.join(dir_target,save_fname)):
             print(f'{save_fname} already exists.')
