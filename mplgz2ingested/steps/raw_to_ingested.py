@@ -7,7 +7,6 @@ Scripts to deal with converting the raw mpl data into the Summit ingested format
 import numpy as np
 import datetime
 import xarray as xr
-import netCDF4
 import os
 import glob
 

@@ -3,15 +3,43 @@ Creation date: 14/2/23
 
 Script to allow for the loading of .mpl.gz files without having to explicitly unzip the files.
 '''
-
 import mpl2nc
 import gzip
 import os
 import datetime
 import xarray as xr
-import numpy as np
 import netCDF4
 import glob
+
+def load_raw(fname, dir='/', verbose=False):
+    '''Function to load raw mpl data into an xarray format.
+    
+    INPUTS:
+        fname : string, iterable
+            If fname is given as a string, it is first treated like a filename. If the file doesn't exist, then the string is treated as a glob string.
+
+        dir : string ; default='/'
+            Base directory from which fname gives the relative location of files. If not supplied, then fname must give absolute paths
+
+        verbose : bool ; default=False
+            Flag for printing debug statements.
+
+    OUTPUTS:
+        ds : xarray.Dataset
+            The loaded MPL data as an xarray dataset format. This will be accepted by raw_to_ingested
+    '''
+    if verbose: print('==== load_raw')
+    try:
+        if os.path.isfile(os.path.join(dir,fname)):# in this instance, single file loading.
+            if verbose: print('loading single file')
+            return load_mplgz(os.path.join(dir,fname))
+        else:
+            if verbose: print('loading from globstring')
+            return load_fromglob(fname,dir)
+    except TypeError as err:
+        if verbose: print('fname not string, attempting mfload')
+        return load_fromlist(fname,dir)
+
 
 def load_mplgz(fname):
     '''Function to load .mpl.gz files from the archive without the need to create additional files.
