@@ -3,7 +3,7 @@ requires = ['setuptools']
 build-backend = 'setuptools.build_meta'
 
 [project]
-name = 'mplgz_to_ingested'
+name = 'mplgz2ingested'
 version = '0.0.1'
 dependencies = [
     'mpl2nc',
@@ -13,5 +13,4 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-where = ['src']
 exclude = ['*.sh','*.cdf']
