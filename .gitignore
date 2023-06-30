@@ -1,3 +1,4 @@
 *.cdf
 *.nc
 *.mpl*
+*.egg-info
