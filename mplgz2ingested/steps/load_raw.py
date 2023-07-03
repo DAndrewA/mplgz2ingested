@@ -6,7 +6,7 @@ Script to allow for the loading of .mpl.gz files without having to explicitly un
 import mpl2nc
 import gzip
 import os
-import datetime
+import datetime as dt
 import xarray as xr
 import netCDF4
 import glob
@@ -111,8 +111,8 @@ def mpl_dict_to_xarray(d):
         if h['units'] is not None: var.units = h['units']
         if h['long_name'] is not None: var.long_name = h['long_name']
         if h['comment'] is not None: var.comment = h['comment']
-    f.created = datetime.datetime.utcnow().strftime('%Y-%m-%dT:%H:%M:%SZ')
-    f.software = 'mpl2nc (https://github.com/peterkuma/mpl2nc)'
+    f.created = dt.datetime.utcnow().strftime('%Y-%m-%dT:%H:%M:%SZ')
+    f.software = 'mpl2nc (https://github.com/peterkuma/mpl2nc) ; mplgz2ingested (https://github.com/DAndrewA/mplgz2ingested)'
     f.version = mpl2nc.__version__
 
     ds = xr.open_dataset(xr.backends.NetCDF4DataStore(f)).load()
@@ -148,7 +148,11 @@ def load_fromlist(fnames, dir_root):
         #print(f'loading {fname}')
         ds.append(load_mplgz(n))
     print('')
-    ds = xr.combine_nested(datasets=ds, concat_dim='profile', combine_attrs='override')
+    try:
+        ds = xr.combine_nested(datasets=ds, concat_dim='profile', combine_attrs='override')
+    except Exception as err: # if the exception is raised, we need to know whether it was duplicate time coordinate, etc...
+        print('load_fromlist: uh oh spaghettio in the combine nested')
+        raise err
     return ds
 
 
@@ -172,6 +176,29 @@ def load_fromglob(globstr, dir_root):
     fnames = sorted(fnames)
     fnames = [n for n in fnames if '.mpl.gz' in n[-7:]] # ensure all files are .mpl.gz
     ds = load_fromlist(fnames, dir_root)
+    return ds
+
+def load_fromdate(date, dir_root):
+    '''Function to load multiple .mpl.gz files from a given datetime.date(time) object.
+    
+    Current implementation will load all avaliable files for the 24 hour period containing the given object date.
+
+    INPUTS:
+        date : datetime.date, datetime.datetime
+            Python datetime object containing the year, month and day attributes. This will be used to select the appropriate files to load.
+
+    OUTPUTS:
+        ds : xarray.Dataset
+            xarray dataset object containing the MPL data loaded from the given date.
+    '''
+    fname_fmt = f'{date.year:04}{date.month:02}{date.day:02}*.nc'
+    mpl_fnames = sorted(glob.glob(fname_fmt,root_dir=dir_root))
+    # if not 24 files are found, then the function will break and return None
+    if len(mpl_fnames) != 24:
+        print(f'raw_to_ingested: For full day, 24 files are expected. {len(mpl_fnames)} files matching date {date} in {dir_root} found.')
+        raise NotImplementedError('Handling of afterpulse files during ingestion, or duplicate time indexes.')
+
+    ds = load_fromlist(mpl_fnames, dir_root)
     return ds
 
 
