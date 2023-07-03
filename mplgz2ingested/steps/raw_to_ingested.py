@@ -12,7 +12,7 @@ import glob
 
 # import local packages
 
-def raw_to_ingested(dir_target,date,limit_height=True, c=299792458, data_loaded=None):
+def raw_to_ingested(data_loaded, limit_height=True, c=299792458):
     '''Convert hourly mpl files to the Summit ingested format.
 
     The function will take hourly .nc files (created by mpl2nc) and concatenate them to produce a file matching the Summit ingested mpl format.
@@ -39,27 +39,6 @@ def raw_to_ingested(dir_target,date,limit_height=True, c=299792458, data_loaded=
         ds : xr.Dataset
             xarray dataset containing the ingested data
     '''
-
-    # STEPS TO IMPLEMENT
-    # 1) Determine files in dir_target, that match date. Ensure there are enough for 24 hours, get sorted list
-    # 2) Load in data as multifile dataset (xarray); create new dataset to be saved
-    # 3) For new dataset, create time and height dimensions; limit height data?
-    # 4) Transfer relevant data from loaded to created dataset, with metadata
-    # 5) Transfer attributes to new dataset, with metadata
-    # 6) save the file
-
-    if data_loaded is None:
-        # get files in dir_target that match the date given
-        filename_fmt = f'{date.year:04}{date.month:02}{date.day:02}*.nc'
-        mpl_filenames = sorted(glob.glob(filename_fmt,root_dir=dir_target))
-        # if not 24 files are found, then the function will break and return None
-        if len(mpl_filenames) != 24:
-            print(f'raw_to_ingested: For full day, 24 files are expected. {len(mpl_filenames)} files matching date {date} in {dir_target} found.')
-            return False
-
-        # load in the data to an xarray dataset
-        data_loaded = xr.open_mfdataset(str(os.path.join(dir_target, filename_fmt)), combine='nested',concat_dim='profile') # open_mfdataset allows glob strings
-
     # create ingested dataset, with appropriate dimensions and height coordinates
     ds = xr.Dataset()
     # set the dimensions for the dataset
@@ -473,7 +452,7 @@ ATTRIBUTES_INGESTED = {
     'Date_created' : None,
     'Ingest_version' : 'Id: mpl/raw_to_ingested.py ,v 0.1 2023/02/14 ',
     'comment' : 'DOE Atmospheric Radiation Measurement (ARM) Micropulse Lidar (MPL) deployed to Summit, Greenland, as part of the NSF-funded ICECAPS project',
-    'Author' : 'Dave Turner, NOAA National Severe Storms Laboratory, dave.turner@noaa.gov \n Andrew Martin, University of Leeds. eeasm@leeds.ac.uk ',
+    'Author' : 'Dave Turner, NOAA National Severe Storms Laboratory, dave.turner@noaa.gov ; Andrew Martin, University of Leeds, eeasm@leeds.ac.uk ',
     'instrument_serial_number' : 108,
     'instrument_version' :  413,
     'backscatter_comment' :'See Flynn et al. 2007 Optics Express paper for details on how to interpret the two backscatter profiles'
