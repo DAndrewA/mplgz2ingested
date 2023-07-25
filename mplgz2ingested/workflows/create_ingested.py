@@ -100,10 +100,10 @@ def load_o_a_s(fname_overlap,fname_afterpulse):
     '''Function to laod in the overlap and afterpulse data
     
     INPUTS:
-        fname_overlap : string
-            Full filename for the overlap data
+        fname_overlap : string, None
+            Full filename for the overlap data. If None, will default to Turner values.
             
-        fname_afterpulse : string
+        fname_afterpulse : string, None
             Full filename for the afterpulse data.
             
     OUTPUTS:
