@@ -134,7 +134,7 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         if used_d: NRB = NRB * deadtime # deadtime correction
         if used_a: NRB = NRB - (afterpulse[f'channel_{channel}'] * ds['energy'] / afterpulse['E0'])*1e6 # afterpulse correction, conversion of per microsecond to per second.
         NRB = NRB - background # background subtraction
-        NRB = NRB.where(NRB>0 ) # remove negative NRB values...
+        NRB = NRB.where(NRB>0) # remove negative NRB values...
 
         NRB = NRB * np.power(ds['height'],2) # range back in km # range2 correction
         if used_o: NRB = NRB / overlap # overlap correction
@@ -143,10 +143,10 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         # the next few calculations concern getting the answer into the units sr^-1 m^-1:
         # The scaling factor is (E_photon) / (pulse frequency) / (detector area) / (dz for range bin)
         A_det = np.pi/4 * (0.2032)**2 # 8-inch diameter aperture [m^2]
-        dz = np.ediff1d(ds['height']).mean() # difference between succdesive elements should be uniform, but mean taken just in case... [m]
+        dz = np.ediff1d(ds['height']).mean() # difference between succesive elements should be uniform, but mean taken just in case... [m]
         E_photon = (6.62607e-34)*c / (532e-9) # energy of the photon in [J]
         NRB = NRB * E_photon / dz / A_det
-        NRB = NRB / ds['rep_rate']
+        NRB = NRB / ds['rep_rate'] # division by pulse frequency
 
         # generate attributes for the new variables
         attrs_NRB = ATTRIBUTES_CALIBRATION['NRB']
@@ -205,6 +205,7 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         '''
 
     # calculate linear depolarisation ratio
+    # These formula are taken from Flynn et al (2007) Novel polarization-sensitive micropulse lidar measurement technique. Optics Express 15:6
     dpol_mpl = ds['NRB_1'] / ds['NRB_2']
     dpol_mpl = dpol_mpl.fillna(0)
     dpol_linear = dpol_mpl / (1+ dpol_mpl)
