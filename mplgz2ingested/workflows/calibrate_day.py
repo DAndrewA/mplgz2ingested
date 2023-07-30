@@ -4,7 +4,7 @@ Creation Date: 30/7/23
 Function to load MPL data for a given date, ingest and calibrate that data.
 '''
 
-import datetime as dt
+import datetime
 import xarray as xr
 import os
 
@@ -78,3 +78,50 @@ def calibrate_day(date, dir_target, dir_mpl, overwrite=False, fname_afterpulse=N
     # now save the dataset as a netcdf file
     ds.to_netcdf(os.path.join(dir_target, save_fname))
     return
+
+
+
+if __name__=='__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description='Script to convert archived .mpl.gz files to ingested .cdf files for a given month.')
+
+    parser.add_argument('-y', '--year', required=True, type=int, help='The year for the month being converted.')
+    parser.add_argument('-m', '--month', required=True, type=int, help='Month for the data being converted, as an integer.')
+    parser.add_argument('-t', '--targetdir', default='/gws/nopw/j04/ncas_radar_vol2/data/ICECAPSarchive/mpl/leeds_ingested', help='The directory that the ingested files will be saved to. Defaults to /gws/nopw/j04/ncas_radar_vol2/data/ICECAPSarchive/mpl/leeds_ingested')
+    parser.add_argument('-d', '--datadir', default='/gws/nopw/j04/ncas_radar_vol2/data/ICECAPSarchive/mpl/raw', help='The directory from which the raw .mpl.gz data will be extracted. Defaults to /gws/nopw/j04/ncas_radar_vol2/data/ICECAPSarchive/mpl/raw')
+    parser.add_argument('-o', '--overwrite', action='store_true', help='Optional, Overwrite existing ingested files at targetdir.')
+
+    parser.add_argument('-A', '--afterpulse', help='Optional, Full filename for the afterpulse file.')
+    parser.add_argument('-O', '--overlap', help='Optional, Full filename for the overlap function file.')
+
+    # an optional argument, if day is passed in then we just do a single day
+    parser.add_argument('--day', type=int, help='Optional, specifies a particular day for which the ingestion should be done.')
+
+    args = parser.parse_args()
+
+    year = args.year
+    month = args.month
+    dir_target = args.targetdir
+    dir_mpl = args.datadir
+    overwrite = args.overwrite
+
+    fname_afterpulse = args.afterpulse
+    fname_overlap = args.overlap
+
+    day = args.day
+
+    # pre-load afterpulse and overlap data
+    afterpulse, sa = steps.load_afterpulse(fname_afterpulse)
+    overlap, so = steps.load_overlap(fname_overlap)
+    sources = {'afterpulse': sa, 'overlap': so}
+
+    if day is not None:
+        date0 = datetime.date(year=year, month=month, day=day)
+        calibrate_day(date=date0, dir_target=dir_target, dir_mpl=dir_mpl, overwrite=overwrite, afterpulse=afterpulse, overlap=overlap, sources=sources)
+    else:
+        for day in range(32): # no month has more than 31 days
+            try:
+                date0 = datetime.date(year=year, month=month, day=day)
+                calibrate_day(date=date0, dir_target=dir_target, dir_mpl=dir_mpl, overwrite=overwrite, afterpulse=afterpulse, overlap=overlap, sources=sources)
+            except:
+                break
