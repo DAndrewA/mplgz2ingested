@@ -8,7 +8,7 @@ import datetime
 import xarray as xr
 import os
 
-from .. import steps
+from mplgz2ingested import steps
 
 def calibrate_day(date, dir_target, dir_mpl, overwrite=False, fname_afterpulse=None, fname_overlap=None, fname_save_fmt = 'mpl_calibrated_{:04}{:02}{:02}.nc', afterpulse=None, overlap=None, sources=None):
     '''Function to load .mpl.gz files for a given day, and ingest and calibrate the data.
@@ -83,7 +83,7 @@ def calibrate_day(date, dir_target, dir_mpl, overwrite=False, fname_afterpulse=N
 
 if __name__=='__main__':
     import argparse
-    parser = argparse.ArgumentParser(description='Script to convert archived .mpl.gz files to ingested .cdf files for a given month.')
+    parser = argparse.ArgumentParser(description='Script to convert archived .mpl.gz files to ingested .nc files for a given date, or whole month.')
 
     parser.add_argument('-y', '--year', required=True, type=int, help='The year for the month being converted.')
     parser.add_argument('-m', '--month', required=True, type=int, help='Month for the data being converted, as an integer.')

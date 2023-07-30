@@ -26,5 +26,6 @@ def load_afterpulse(fname_afterpulse):
         afterpulse = xr.load_dataset(fname_afterpulse)
     else:
         afterpulse, source = data.time_averaged_afterpulse()
+        print('load_afterpulse: default afterpulse loaded')
 
     return afterpulse, source
