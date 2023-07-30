@@ -195,8 +195,12 @@ def load_fromdate(date, dir_root):
     mpl_fnames = sorted(glob.glob(fname_fmt,root_dir=dir_root))
     # if not 24 files are found, then the function will break and return None
     if len(mpl_fnames) != 24:
-        print(f'raw_to_ingested: For full day, 24 files are expected. {len(mpl_fnames)} files matching date {date} in {dir_root} found.')
-        raise NotImplementedError('Handling of afterpulse files during ingestion, or duplicate time indexes.')
+        print(f'load_formdate: For full day, 24 files are expected. {len(mpl_fnames)} files matching date {date} in {dir_root} found.')
+        mpl_fnames_hourly = [fn for fn in mpl_fnames if fn[-9:-6] == '00.'] # extract the hourly files
+        mpl_fnames_notcalib = [fn for fn in mpl_fnames if fn[-9:-6] != '00.'][-1] # extract the not-calibration file
+        mpl_fnames = sorted([*mpl_fnames_hourly, mpl_fnames_notcalib])
+        print(f'load_fromdate: {mpl_fnames_notcalib} identified as not-calibration file')
+
 
     ds = load_fromlist(mpl_fnames, dir_root)
     return ds
