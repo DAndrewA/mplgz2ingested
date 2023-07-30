@@ -4,7 +4,7 @@ Creation date: 25/7/23
 Function to load in an afterpulse file for use in steps.calibrate_ingested()
 '''
 
-import numpy as np
+import mplgz2ingested.data as data
 import xarray as xr
 
 def load_afterpulse(fname_afterpulse):
@@ -24,5 +24,7 @@ def load_afterpulse(fname_afterpulse):
     if fname_afterpulse is not None:
         source = fname_afterpulse
         afterpulse = xr.load_dataset(fname_afterpulse)
+    else:
+        afterpulse, source = data.time_averaged_afterpulse()
 
     return afterpulse, source
