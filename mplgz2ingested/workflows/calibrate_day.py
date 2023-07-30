@@ -10,7 +10,7 @@ import os
 
 from .. import steps
 
-def calibrate_day(date, dir_target, dir_mpl, overwrite=False, fname_afterpulse=None, fname_overlap=None, fname_save_fmt = 'mpl_ingested_{:04}{:02}{:02}.nc'):
+def calibrate_day(date, dir_target, dir_mpl, overwrite=False, fname_afterpulse=None, fname_overlap=None, fname_save_fmt = 'mpl_calibrated_{:04}{:02}{:02}.nc'):
     '''Function to load .mpl.gz files for a given day, and ingest and calibrate the data.
 
     The afterpulse and overlap data used in the calibration will take on the defauilt values given in the package.
