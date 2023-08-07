@@ -11,6 +11,8 @@ import xarray as xr
 import netCDF4
 import glob
 
+from contextlib import nullcontext
+
 def load_raw(fname, dir='/', verbose=False):
     '''Function to load raw mpl data into an xarray format.
     
@@ -66,6 +68,8 @@ def load_mplgz(fname):
 
 def mpl2nc_read_mpl_gzip(fname):
     '''Effective rewriting of mpl2nc.read_mpl to use gzip.open() rather than open().
+
+    7/8/23: changed function to allow loading of non .gz files, for the case of accessing raw .mpl archive data.
     
     INPUTS:
         fname : string
@@ -76,7 +80,10 @@ def mpl2nc_read_mpl_gzip(fname):
             Dictionary produced by mpl2nc.process_mpl, containing information of the laoded mpl data.
     '''
     dd = []
-    with gzip.open(fname,'rb') as f:
+
+    is_gz = (fname[-3:] == '.gz')
+
+    with gzip.open(fname,'rb') if is_gz else open(fname,'rb') as f:
         while True:
             d = mpl2nc.read_mpl_profile(f)
             if d is None:
@@ -174,7 +181,7 @@ def load_fromglob(globstr, dir_root):
     '''
     fnames = glob.glob(globstr, root_dir=dir_root)
     fnames = sorted(fnames)
-    fnames = [n for n in fnames if '.mpl.gz' in n[-7:]] # ensure all files are .mpl.gz
+    fnames = [n for n in fnames if '.mpl' in n] # ensure all files are .mpl, allows for .mpl and .mpl.gz
     ds = load_fromlist(fnames, dir_root)
     return ds
 
@@ -191,7 +198,7 @@ def load_fromdate(date, dir_root):
         ds : xarray.Dataset
             xarray dataset object containing the MPL data loaded from the given date.
     '''
-    fname_fmt = f'{date.year:04}{date.month:02}{date.day:02}*.mpl.gz'
+    fname_fmt = f'{date.year:04}{date.month:02}{date.day:02}*.mpl*' # allows for .mpl and .mpl.gz files to be loaded
     mpl_fnames = sorted(glob.glob(fname_fmt,root_dir=dir_root))
 
     # if not 24 files are found, then the function will break and return None
