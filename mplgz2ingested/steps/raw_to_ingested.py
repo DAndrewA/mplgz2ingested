@@ -429,33 +429,39 @@ def ingested_alt(dsl, **kwargs):
 VARIABLES_INGESTED = {
     'base_time': [(), np.datetime64, {'long_name': 'Base time in Epoch'}, ingest_base_time],
     'time_offset': [('time',), np.timedelta64, {'long_name': 'Time offset from base_time'}, ingested_time_offset],
-    'hour': [('time',), np.float32, {'long_name': 'Hour of the day', 'units': 'UTC'}, ingested_hour],
-    'nshots': [('time',), np.int32, {'long_name': 'number of laser shots', 'units': 'unitless'}, ingested_nshots],
+    'hour': [('time',), np.float32, {'long_name': 'Hour of the day', 'units': 'hour'}, ingested_hour],
+    'nshots': [('time',), np.int32, {'long_name': 'number of laser shots', 'units': 'counts'}, ingested_nshots],
     'rep_rate': [('time',), np.int32, {'long_name': 'laser pulse repetition frequency', 'units': 'Hz'}, ingested_rep_rate],
     'energy': [('time',), np.float32, {'long_name': 'laser energy', 'units': 'microJoules'}, ingested_energy],
-    'temp_detector': [('time',), np.float32, {'long_name': 'detector temperature', 'units': 'C'}, ingested_temp_detector],
-    'temp_telescope': [('time',), np.float32, {'long_name': 'telescope temperature', 'units': 'C'}, ingested_temp_telescope],
-    'temp_laser': [('time',), np.float32, {'long_name': 'laser temperature', 'units': 'C'}, ingested_temp_laser],
+    'temp_detector': [('time',), np.float32, {'long_name': 'detector temperature', 'units': 'degC'}, ingested_temp_detector],
+    'temp_telescope': [('time',), np.float32, {'long_name': 'telescope temperature', 'units': 'degC'}, ingested_temp_telescope],
+    'temp_laser': [('time',), np.float32, {'long_name': 'laser temperature', 'units': 'degC'}, ingested_temp_laser],
     'mn_background_1': [('time',), np.float32, {'long_name': 'mean background in channel 1', 'units': 'counts / microsecond'}, ingested_mn_background_1],
     'sd_background_1': [('time',), np.float32, {'long_name': 'standard deviation of the background in channel 1', 'units': 'counts / microsecond'}, ingested_sd_background_1],
     'mn_background_2': [('time',), np.float32, {'long_name': 'mean background in channel 2', 'units': 'counts / microsecond'}, ingested_mn_background_2],
     'sd_background_2': [('time',), np.float32, {'long_name': 'standard deviation of the background in channel 2', 'units': 'counts / microsecond'}, ingested_sd_background_2],
-    'initial_cbh': [('time',), np.float32, {'long_name': 'initial cloud base height from MPL software', 'units': 'km AGL'}, ingested_initial_cbh],
+    'initial_cbh': [('time',), np.float32, {'long_name': 'initial cloud base height from MPL software, above ground', 'units': 'km'}, ingested_initial_cbh],
     'backscatter_1': [('time', 'height'), np.float32, {'long_name': 'attenuated backscatter in channel 1', 'units': 'counts / microsecond', 'channel_interpretation': 'This is the linear cross-polarization channel.  It is sensitive to the depolarized backscatter from the atmosphere', 'comment': 'This field literally contains the counts detected by the detector for each range bin.  No corrections of any kind have been applied to this field.  In order to make proper use of the data, one should correct for detector non-linearity, subtract the afterpulse, subtract background counts, apply a range-squared correction, and correct for optical overlap and collimation effects'}, ingested_backscatter_1],
     'backscatter_2': [('time', 'height'), np.float32, {'long_name': 'attenuated backscatter in channel 2', 'units': 'counts / microsecond', 'channel_interpretation': 'This is the circular polarization channel.  It is sensitive to the unpolarized backscatter from the atmosphere', 'comment': 'This field literally contains the counts detected by the detector for each range bin.  No corrections of any kind have been applied to this field.  In order to make proper use of the data, one should correct for detector non-linearity, subtract the afterpulse, subtract background counts, apply a range-squared correction, and correct for optical overlap and collimation effects'}, ingested_backscatter_2],
-    'lat': [(), np.float32, {'long_name': 'north latitude', 'units': 'deg'}, ingested_lat],
-    'lon': [(), np.float32, {'long_name': 'east longitude', 'units': 'deg'}, ingested_lon],
-    'alt': [(), np.float32, {'long_name': 'altitude', 'units': 'm MSL'}, ingested_alt]
+    'lat': [(), np.float32, {'long_name': 'north latitude', 'units': 'degrees'}, ingested_lat],
+    'lon': [(), np.float32, {'long_name': 'east longitude', 'units': 'degrees'}, ingested_lon],
+    'alt': [(), np.float32, {'long_name': 'altitude above Mean Sea Level', 'units': 'm'}, ingested_alt]
+}
+
+DIMENSIONS_INGESTED = {
+      'height': {'long_name': 'height', 'units': 'm'},
+      'time': {'long_name': 'time', 'units': ''}
 }
 
 ATTRIBUTES_INGESTED = {
     'Date_created' : None,
-    'Ingest_version' : 'Id: mpl/raw_to_ingested.py ,v 0.1 2023/02/14 ',
+    'Ingest_version' : 'Id: mplgz2ingested/steps/raw_to_ingested.py ,v 0.1 2023/07/30',
     'comment' : 'DOE Atmospheric Radiation Measurement (ARM) Micropulse Lidar (MPL) deployed to Summit, Greenland, as part of the NSF-funded ICECAPS project',
-    'Author' : 'Dave Turner, NOAA National Severe Storms Laboratory, dave.turner@noaa.gov ; Andrew Martin, University of Leeds, eeasm@leeds.ac.uk ',
+    'Author' : 'Dave Turner, NOAA National Severe Storms Laboratory, dave.turner@noaa.gov ; Andrew Martin, University of Leeds, eeasm@leeds.ac.uk',
     'instrument_serial_number' : 108,
     'instrument_version' :  413,
-    'backscatter_comment' :'See Flynn et al. 2007 Optics Express paper for details on how to interpret the two backscatter profiles'
+    'backscatter_comment' :'See Flynn et al. 2007 Optics Express paper for details on how to interpret the two backscatter profiles',
+    'Conventions': 'CF-1.11-draft'
 }
 
 '''
