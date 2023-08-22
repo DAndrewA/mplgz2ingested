@@ -161,7 +161,7 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
 
             afterpulse[f'channel_{channel}'] = afterpulse[f'channel_{channel}'].assign_attrs(attrs_aft)
             ds[f'afterpulse_{channel}'] = afterpulse[f'channel_{channel}']
-            ds['afterpulse_E0'] = afterpulse['E0']
+            ds['afterpulse_E0'] = afterpulse['E0'].assign_attrs(ATTRIBUTES_CALIBRATION['afterpulse_E0'])
 
         if used_o: # if an overlap function was given, store it in the dataset
             attrs_NRB_fmt[1] = ''
@@ -228,17 +228,19 @@ ATTRIBUTES_CALIBRATION = {
 
     'afterpulse': {'long_name': 'Afterpulse signal', 'units': 'counts m^-1', 'comment': 'The afterpulse signal for channel {}.'},
 
-    'overlap': {'long_name': 'overlap correction factor', 'units': 'unitless', 'comment': 'The overlap correction as a function of height.'},
+    'afterpulse_E0': {'long_name': 'Average afterpulse pulse energy', 'units': 'microJoules'},
 
-    'deadtime': {'long_name': 'deadtime correction factor', 'units': 'unitless', 'comment': 'The deadtime correction factor as a function of received signal in counts/m.'},
+    'overlap': {'long_name': 'overlap correction factor', 'units': '1', 'comment': 'The overlap correction as a function of height.'},
+
+    'deadtime': {'long_name': 'deadtime correction factor', 'units': '1', 'comment': 'The deadtime correction factor as a function of received signal in counts/m.'},
 
     'NRB_background': {'long_name': 'Normalised relative backscatter background count', 'units': 'counts m^-1', 'comment': 'The background for the NRB in channel {}. Calculated from the field mn_background_{} * 2 / c * 1e6.'},
 
     'NRB_background_sd': {'long_name': 'normalised relative backscatter background standard deviation', 'units': 'counts m^-1', 'comment': 'Standard deviation on the NRB background count for channel {}. Calculated from the field sd_background_{} * 2 / c * 1e6.'},
 
-    'depol_mpl': {'long_name': 'MPL depolarisation ratio', 'units': 'unitless', 'comment': 'MPL depolarisation ratio, taken as NRB_1/NRB_2 as defined in Flynn et al. (2007) Novel polarization-sensitive micropulse lidar measurement technique, eq1.4.'},
+    'depol_mpl': {'long_name': 'MPL depolarisation ratio', 'units': '1', 'comment': 'MPL depolarisation ratio, taken as NRB_1/NRB_2 as defined in Flynn et al. (2007) Novel polarization-sensitive micropulse lidar measurement technique, eq1.4.'},
 
-    'depol_linear' : {'long_name': 'linear depolarisation ratio', 'units': 'unitless', 'comment': 'Linear depolarisation ratio as seen in Flynn et al. (2007) Novel polarization-sensitive micropulse lidar measurement technique, eq1.6.'},
+    'depol_linear' : {'long_name': 'linear depolarisation ratio', 'units': '1', 'comment': 'Linear depolarisation ratio as seen in Flynn et al. (2007) Novel polarization-sensitive micropulse lidar measurement technique, eq1.6.'},
 
     'NRB_total' : {'long_name': 'total attenuated backscatter', 'units': 'sr^-1 m^-1', 'comment': 'The total backscatter coefficient, that has been determined from NRB_1 and NRB_2 according to Flynn et al. (2007) Novel polarization-sensitive micropulse lidar measurement technique, eq1.8'}
 }  
