@@ -26,6 +26,8 @@ Class definition for the ARM Micro Pulse Lidar (MPL).
 
 """
 import os
+import gzip
+import io
 from struct import unpack
 import numpy as np
 from datetime import datetime
@@ -47,7 +49,18 @@ class MPL:
         #################################################################################
         # Open file and read critical parameters for determining header and record sizes.
         self.filename             = filename
-        self.fp                   = open(filename,'rb')
+        
+        # functionality for opening from the ICECAPSarchive on JASMIN. File size in gzip format will be different too.
+        if filename[-3:] == '.gz':
+            self.fp = gzip.open(filename, 'rb')
+            #self.fileSize = self.fp.size
+            self.fileSize = self.fp.seek(0, io.SEEK_END)
+            self.fp.seek(0,0)
+
+        else:
+            self.fp = open(filename,'rb')
+            self.fileSize = os.path.getsize(filename)
+        
         self.unitNumber           = np.uint16( unpack('<H',self.fp.read(2)))[0]
         self.fp.seek(56)
         self.numberChannels       = np.uint16( unpack('<H',self.fp.read(2)))[0]
@@ -61,7 +74,6 @@ class MPL:
         self.numberBytesPerRecord = self.headerSize + (self.numberChannels*self.numberBins*4)
         
         # Determine the size of the file and the number of records.
-        self.fileSize             = os.path.getsize(filename)
         self.numberRecords        = (self.fileSize / self.numberBytesPerRecord).astype('int')
         
         # Reset the file pointer to the beginning of the file.
@@ -271,12 +283,57 @@ class MPL:
         return
     
     def to_xarray(self):
+        # dictionary of variables to rename from the MPL.header format to one compatible with mplgz2ingested.steps.raw_to_ingested
+        VARS_convert = {'unitNumber':'unit', 
+                'version':'version', 
+                #'Time':'Time',
+                'shotsSum':'shots_sum',
+                'triggerFrequency': 'trigger_frequency',
+                'energyMonitor': 'energy_monitor',
+                'backgroundAverage':'background_average',
+                'backgroundStdDev':'background_stddev',
+                'numberChannels':'number_channels',
+                'binTime':'bin_time',
+                'rangeCalibration':'range_calibration',
+                'numberDataBins':'number_data_bins',
+                'scanScenarioFlag':'scan_scenario_flags',
+                'numberBackgrdBins':'num_background_bins',
+                'azimuthAngle':'azimuth_angle',
+                'elevationAngle':'elevation_angle',
+                'compassDegrees':'compass_degrees',
+                'polarizationV0':'polarization_voltage_0',
+                'polarizationV1':'polarization_voltage_1',
+                'gpsLatitude':'gps_latitude',
+                'gpsLongitude':'gps_longitude',
+                'aToDdataBadFlag':'ad_data_bad_flag',
+                'dataFileVersion':'data_file_version',
+                'backgrdAverage2':'background_average_2',
+                'backgrdStdDev2':'background_stddev_2',
+                'mcsMode':'mcs_mode',
+                'firstDataBin':'first_data_bin',
+                'systemType':'system_type',
+                'syncPulsePerSec':'sync_pulses_seen_per_second',
+                'firstBackgrdBin':'first_background_bin',
+                'detectorTemp':'temp_0',
+                'telescopeTemp':'temp_2',
+                'laserTemp':'temp_3'
+               }
+        # setup variables for raw_to_ingested 
+        for k,v in VARS_convert.items():
+            self.header[v] = self.header.pop(k)
+            if v[:4] == 'temp':
+                self.header[v] = self.header[v] * 100
+        
+        
+        # backscatter_# changed to channel_# for use in raw_to_ingested
         header = {k: ('time', self.header[k]) for k in self.header.keys()}
-        data   = {'backscatter_1': (('time', 'height'), self.dataCh1[:,0:1200]), 'backscatter_2': (('time', 'height'), self.dataCh2[:,0:1200])}
+        data   = {'channel_1': (('time', 'height'), self.dataCh1[:,0:1200]), 'channel_2': (('time', 'height'), self.dataCh2[:,0:1200])}
         ds = xr.Dataset(
             data_vars= header | data, 
             coords={'time': self.time, 'height': self.height[0:1200]}
         )
+        # include profile as a varibale, to match the output from mpl2nc package
+        ds['profile'] = ds['time']
 
         return ds
 
