@@ -65,6 +65,7 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
 
     if afterpulse is not None:
         used_a = True
+        '''
         af1 = xr.ones_like(ds.height) * np.interp(ds.height.values, afterpulse.height.values, afterpulse.channel_1.values)
         af2 = xr.ones_like(ds.height) * np.interp(ds.height.values, afterpulse.height.values, afterpulse.channel_2.values)
         E0 = afterpulse.E0
@@ -72,6 +73,8 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         afterpulse['channel_1'] = af1 #* 2 / c * micro_conv
         afterpulse['channel_2'] = af2 #* 2 / c * micro_conv
         afterpulse['E0'] = E0
+        '''
+        afterpulse = afterpulse.interp_like(ds.height)
     else:
         afterpulse = xr.Dataset()
         afterpulse['channel_1'] = xr.zeros_like(ds.height)
@@ -88,25 +91,6 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
     
     # for both channels
     for channel in [1,2]:
-        
-        '''# INITIAL form of NRB calculation
-        # start with a conversion to counts per meter
-        backscatter_h = ds[f'backscatter_{channel}'] * 2 / c * micro_conv # backscatter
-        background_h = ds[f'mn_background_{channel}'] * 2 / c * micro_conv # background
-        background_sd_h = ds[f'sd_background_{channel}'] * 2 / c * micro_conv # sd of background
-        ##### NRB CALCULATION #####
-        NRB = backscatter_h
-        if used_d: NRB = NRB * deadtime # apply deadtime correction
-        NRB = NRB - background_h # subtract background
-        if used_a: NRB = NRB - afterpulse[f'channel_{channel}'] * ds['energy'] / afterpulse['E0'] # subtract afterpulse
-        NRB = NRB * np.power(ds.height,2) # range^2 correction
-        if used_o: NRB = NRB / overlap # apply overlap correction
-        # not applying energy correction as I believe we don't have power as our stored variable...
-        #NRB = NRB / ds.energy * micro_conv # # apply energy conversion
-
-        # only interested in NRB above ground [201:] height bin
-        NRB = NRB.where(NRB.height > 0)
-        '''
         '''
         ##### NRB CALCULATION #####
         # https://journals.ametsoc.org/view/journals/atot/19/4/1520-0426_2002_019_0431_ftesca_2_0_co_2.xml Campbell 2002
@@ -118,26 +102,33 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         NRB = NRB * np.power(ds.height,2) # range^2 correction
         if used_o: NRB = NRB / overlap # overlap correction
         NRB = NRB / ds['energy'] * micro_conv # pulse energy correction
-        '''
 
-        ##### NRB CALCULATION #####
-        # This will be according to the Chu Lidar textbook pg192, and my subsequent derivation considering the integration time of the instrument.
-        
+        ##### NRB CALIBRATION #####
+        # After the NRB has been calculated according to Campbell 2002, it will be multiplied by a constant factor, derived from Chu Lidar textbook pg192, to attempt to put the value in units of [/sr/m].
         '''
-        # new way of calulcating background:
-        # background = ds[f'mn_background_{channel}']
-        bkg_height = 10000 # background height [m]
-        background = ds[f'backscatter_{channel}'].where(ds.height > bkg_height,drop=True)
-        background = background.max(dim='height') * 1e6 # counts per second (from per microsecond)
-        '''# Another way of calculating backgorund, taken from Von Walden's code
-        background = ds[f'backscatter_{channel}'].where(ds.height < 0,drop=True).mean(dim='height') * 1e6 # taking the signal beneath the ground, in counts per second.
+        # mn_backgorund_# is the same as the profile mean of bins below a height of 0
+        background = ds[f'mn_background_{channel}'] * 1e6 # taking the signal beneath the ground, in counts per second.
 
         # start with the initial backscatter, in counts/s
         NRB = ds[f'backscatter_{channel}'] * 1e6 # counts per second (from per microsecond)
+
         if used_d: NRB = NRB * deadtime # deadtime correction
         if used_a: NRB = NRB - (afterpulse[f'channel_{channel}'] * ds['energy'] / afterpulse['E0'])*1e6 # afterpulse correction, conversion of per microsecond to per second.
         NRB = NRB - background # background subtraction
-        NRB = NRB.where(NRB>0) # remove negative NRB values...
+        #NRB = NRB.where(NRB>0) # remove negative NRB values...
+
+        ######
+        # calculate uncertainty of the NRB values, as current value of NRB is used in calculation
+        # This is taken from Campbell et al. 2008, Elevated Cloud and Aerosol Layer Retrievals from Micropulse Lidar Signal Profiles
+        dNRB = ds[f'backscatter_{channel}']*1e6 / ds['nshots']
+        if used_d: dNRB = dNRB * deadtime
+        dNRB = np.power(dNRB,2)
+        dNRB = dNRB + np.power(ds[f'sd_background_{channel}']*1e6, 2)
+        if used_a and f'std_{channel}' in afterpulse: dNRB = dNRB + np.power(afterpulse[f'std_{channel}'] *1e6, 2)
+        dNRB = dNRB / np.power(NRB, 2)
+        #dNRB = dNRB + np.power(0.01, 2) # assume 1% fractional error in energy of the pulse
+        #dNRB = dNRB + np.power(0.02/overlap,2) # assume error in the overlap function of 0.02
+        ######
 
         NRB = NRB * np.power(ds['height'],2) # range back in km # range2 correction
         if used_o: NRB = NRB / overlap # overlap correction
@@ -150,6 +141,9 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         E_photon = (6.62607e-34)*c / (532e-9) # energy of the photon in [J]
         NRB = NRB * E_photon / dz / A_det
         NRB = NRB / ds['rep_rate'] # division by pulse frequency
+
+        # finish calculation of NRB uncertainty
+        dNRB = NRB * np.power(dNRB,0.5)
 
         # generate attributes for the new variables
         attrs_NRB = ATTRIBUTES_CALIBRATION['NRB']
@@ -188,6 +182,12 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
         attrs_NRB['comment'] = attrs_NRB['comment'].format(channel, *attrs_NRB_fmt)
         NRB = NRB.assign_attrs(attrs_NRB)
         ds[f'NRB_{channel}'] = NRB
+
+        # assign dNRB with correct attributes to dataset
+        attrs_dNRB = ATTRIBUTES_CALIBRATION['dNRB']
+        attrs_dNRB['comment'] = attrs_dNRB['comment'].format(channel)
+        dNRB = dNRB.assign_attrs(attrs_dNRB)
+        ds[f'dNRB_{channel}'] = dNRB
 
         # assign variables for the scaling constants
         ds['A_det'] = xr.DataArray(A_det, attrs={'long_name': 'detector area', 'units': 'm^2', 'comment': 'The detector area for a circular 8" aperture, see https://www.arm.gov/publications/tech_reports/handbooks/mpl_handbook.pdf'})
@@ -228,6 +228,8 @@ def calibrate_ingested(ds, overlap=None, afterpulse=None, deadtime=None, c=29979
 
 ATTRIBUTES_CALIBRATION = {
     'NRB': {'long_name': 'attenuated backscatter', 'units': 'sr^-1 m^-1', 'comment': 'The backscatter signal for channel {} that has been range-corrected, background corrected, {}corrected for afterpulse, {}corrected for overlap and {}corrected for deadtime effects. Has also been corrected for the detector aperture, pulse energy, etc.'},
+
+    'dNRB': {'long_name': 'uncertainty in attenuated backscatter', 'units': 'sr^-1 m^-1', 'comment': 'The uncertainty in the attenuated backscatter for channel {}. This is caluclated using eq.2 in Campbel et al. 2008, Elevated Cloud and Aerosol Layer Retrievals from Micropulse Lidar Signal Profiles.'},
 
     'afterpulse': {'long_name': 'Afterpulse signal', 'units': 'counts m^-1', 'comment': 'The afterpulse signal for channel {}.'},
 
